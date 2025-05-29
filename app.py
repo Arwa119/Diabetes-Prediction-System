@@ -154,5 +154,9 @@ def predict():
     except Exception as e:
         return jsonify({'error': str(e)}), 400
 
+@app.route('/result')
+def result():
+    return render_template('result.html')
+
 if __name__ == '__main__':
     app.run(debug=True)

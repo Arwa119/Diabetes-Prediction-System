@@ -20,7 +20,7 @@
         background: linear-gradient(135deg, #e6f0fa 0%, #f7f9fc 100%);
         color: #2d3748;
         line-height: 1.6;
-        min-height: \n100vh;
+        min-height: 100vh;
       }
 
       header {
@@ -49,8 +49,7 @@
         padding: 0 1rem;
       }
 
-      .form-section,
-      .result-section {
+      .form-section {
         background: white;
         border-radius: 12px;
         padding: 2rem;
@@ -59,13 +58,11 @@
         transition: transform 0.3s ease;
       }
 
-      .form-section:hover,
-      .result-section:hover {
+      .form-section:hover {
         transform: translateY(-4px);
       }
 
-      .form-section h2,
-      .result-section h2 {
+      .form-section h2 {
         font-size: 1.8rem;
         font-weight: 500;
         color: #2b6cb0;
@@ -151,66 +148,6 @@
         border-radius: 6px;
       }
 
-      .result-section {
-        display: none;
-      }
-
-      .result-section.active {
-        display: block;
-      }
-
-      .result-section p {
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
-      }
-
-      #prediction-text {
-        font-size: 1.3rem;
-        font-weight: 500;
-        color: #2d3748;
-      }
-
-      .progress-bar {
-        width: 100%;
-        background: #edf2f7;
-        border-radius: 6px;
-        overflow: hidden;
-        margin: 1rem 0;
-      }
-
-      .progress {
-        height: 20px;
-        background: linear-gradient(90deg, #3182ce, #63b3ed);
-        transition: width 0.5s ease;
-      }
-
-      #confidence-text {
-        font-size: 1.1rem;
-        font-weight: 500;
-        color: #2b6cb0;
-      }
-
-      #top-factors {
-        list-style: none;
-        padding: 0;
-        margin: 1rem 0;
-      }
-
-      #top-factors li {
-        padding: 0.5rem 0;
-        font-size: 1rem;
-        color: #4a5568;
-      }
-
-      #medical-advice {
-        background: #f7fafc;
-        padding: 1rem;
-        border-radius: 6px;
-        font-size: 1rem;
-        color: #2d3748;
-        line-height: 1.8;
-      }
-
       footer {
         text-align: center;
         padding: 2rem 1rem;
@@ -236,8 +173,7 @@
           grid-template-columns: 1fr;
         }
 
-        .form-section,
-        .result-section {
+        .form-section {
           padding: 1.5rem;
         }
       }
@@ -338,21 +274,6 @@
         </form>
         <div class="loading" id="loading">Processing your request...</div>
       </div>
-
-      <div class="result-section" id="result-section">
-        <h2>Prediction Result</h2>
-        <p>Based on the provided patient information</p>
-        <p id="prediction-text"></p>
-        <h3>Confidence Level:</h3>
-        <div class="progress-bar">
-          <div class="progress" id="confidence-bar" style="width: 0%"></div>
-        </div>
-        <p id="confidence-text">0%</p>
-        <h3>Top Contributing Factors</h3>
-        <ul id="top-factors"></ul>
-        <h3>Medical Advice</h3>
-        <p id="medical-advice"></p>
-      </div>
     </div>
 
     <footer>
@@ -373,7 +294,6 @@
 
           // Show loading
           document.getElementById("loading").style.display = "block";
-          document.getElementById("result-section").classList.remove("active");
 
           // Get form data
           const formData = new FormData(this);
@@ -388,39 +308,11 @@
             const result = await response.json();
 
             if (response.ok) {
-              // Update prediction result
-              const predictionText =
-                result.prediction === 1 ? "Diabetic" : "Non-Diabetic";
-              document.getElementById(
-                "prediction-text"
-              ).textContent = `Result: ${predictionText}`;
-
-              // Update confidence
-              const confidence = (result.probability * 100).toFixed(2);
-              document.getElementById(
-                "confidence-text"
-              ).textContent = `${confidence}%`;
-              document.getElementById(
-                "confidence-bar"
-              ).style.width = `${confidence}%`;
-
-              // Update top factors
-              const factorsList = document.getElementById("top-factors");
-              factorsList.innerHTML = "";
-              result.top_features.forEach((factor) => {
-                const li = document.createElement("li");
-                li.textContent = `${factor.feature}: ${(
-                  factor.importance * 100
-                ).toFixed(2)}%`;
-                factorsList.appendChild(li);
-              });
-
-              // Update medical advice with Gemini response
-              document.getElementById("medical-advice").textContent =
-                result.gemini_advice;
-
-              // Show result section
-              document.getElementById("result-section").classList.add("active");
+              // Store result data in sessionStorage to pass to result page
+              sessionStorage.setItem("predictionData", JSON.stringify(result));
+              
+              // Redirect to result page - CHANGED THIS LINE
+              window.location.href = "/result";
             } else {
               alert(`Error: ${result.error}`);
             }
@@ -429,18 +321,6 @@
           } finally {
             document.getElementById("loading").style.display = "none";
           }
-        });
-
-      // Reset form
-      document
-        .getElementById("prediction-form")
-        .addEventListener("reset", function () {
-          document.getElementById("result-section").classList.remove("active");
-          document.getElementById("prediction-text").textContent = "";
-          document.getElementById("confidence-text").textContent = "0%";
-          document.getElementById("confidence-bar").style.width = "0%";
-          document.getElementById("top-factors").innerHTML = "";
-          document.getElementById("medical-advice").textContent = "";
         });
     </script>
   </body>
