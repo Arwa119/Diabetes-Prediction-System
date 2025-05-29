@@ -71,12 +71,18 @@ def get_gemini_response(prediction, probability, top_features, input_data):
         )])
         
         prompt = f"""
-        A machine learning model predicted that a patient is {result_text} with a confidence of {probability:.2%}.
-        The top contributing factors to this prediction are: {feature_text}.
-        The patient's input data is: {input_text}.
-        Provide a concise medical advice or insight (max 150 words) based on this prediction, including recommendations for the patient. 
-        Emphasize that this is not a definitive diagnosis and they should consult a healthcare professional.
-        """
+                    A machine learning model predicted that a patient is {result_text} with a confidence of {probability:.2%}.
+                    The top contributing factors to this prediction are: {feature_text}.
+                    The patient's input data is: {input_text}.
+                    
+                    Provide medical advice based on this prediction in a bullet point format, including:
+                    • Risk assessment
+                    • Lifestyle recommendations
+                    • Monitoring suggestions
+                    • When to seek medical attention
+                    
+                    Keep the total response under 150 words. Emphasize that this is not a definitive diagnosis and they should consult a healthcare professional.
+                    """
         
         # Initialize Gemini model (assuming Gemini 1.5 Flash for efficiency)
         gemini_model = genai.GenerativeModel('gemini-1.5-flash')

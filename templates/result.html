@@ -152,6 +152,28 @@
       footer p {
         margin-bottom: 0.5rem;
       }
+      .advice-container {
+  background: #f7fafc;
+  padding: 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #2d3748;
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.advice-container ul {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.advice-container li {
+  margin-bottom: 0.5rem;
+}
+
+.advice-container p {
+  margin-bottom: 0.75rem;
+}
 
       @media (max-width: 768px) {
         header h1 {
@@ -187,9 +209,8 @@
         <h3>Top Contributing Factors</h3>
         <ul id="top-factors"></ul>
         <h3>Medical Advice</h3>
-        <p id="medical-advice"></p>
-        <a href="index.html" class="button">Make New Prediction</a>
-      </div>
+<div id="medical-advice" class="advice-container"></div>
+<a href="/" class="button">Make New Prediction</a>      </div>
     </div>
 
     <footer>
@@ -245,8 +266,33 @@
           });
 
           // Update medical advice with Gemini response
-          document.getElementById("medical-advice").textContent =
-            result.gemini_advice;
+           const adviceContainer = document.getElementById("medical-advice");
+  
+  // Format the medical advice
+  let formattedAdvice = result.gemini_advice;
+  
+  // Look for bullet points in various formats
+  formattedAdvice = formattedAdvice.replace(/•\s(.*?)(?=\n•|\n\n|$)/gs, '<li>$1</li>');
+  formattedAdvice = formattedAdvice.replace(/\n\s*\*\s(.*?)(?=\n\*|\n\n|$)/gs, '<li>$1</li>');
+  formattedAdvice = formattedAdvice.replace(/\n\s*-\s(.*?)(?=\n-|\n\n|$)/gs, '<li>$1</li>');
+  formattedAdvice = formattedAdvice.replace(/\n\s*\d+\.\s(.*?)(?=\n\d+\.|\n\n|$)/gs, '<li>$1</li>');
+  
+  // If we found and replaced any bullet points, wrap them in a ul
+  if (formattedAdvice.includes('<li>')) {
+    formattedAdvice = formattedAdvice.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
+  }
+  
+  // Convert line breaks to paragraphs for non-list content
+  formattedAdvice = formattedAdvice.replace(/\n\n/g, '</p><p>');
+  
+  // Wrap everything in paragraphs if not already
+  if (!formattedAdvice.startsWith('<')) {
+    formattedAdvice = '<p>' + formattedAdvice + '</p>';
+  }
+  
+  // Set the formatted HTML
+  adviceContainer.innerHTML = formattedAdvice;
+  
             
           // Clear sessionStorage after displaying results
           // This is optional - you might want to keep it for back navigation
