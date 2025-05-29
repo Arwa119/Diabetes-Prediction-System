@@ -419,181 +419,219 @@
     </footer>
 
     <script>
-      document.addEventListener("DOMContentLoaded", function() {
-        // Retrieve prediction data from sessionStorage
-        const predictionDataString = sessionStorage.getItem("predictionData");
+  document.addEventListener("DOMContentLoaded", function() {
+    // Retrieve prediction data from sessionStorage
+    const predictionDataString = sessionStorage.getItem("predictionData");
+    
+    if (!predictionDataString) {
+      // If no data is found, redirect back to the form
+      alert("No prediction data found. Please fill out the form again.");
+      window.location.href = "/";
+      return;
+    }
+    
+    let predictionData;
+    
+    try {
+      predictionData = JSON.parse(predictionDataString);
+      
+      // Update prediction result
+      const predictionText =
+        predictionData.prediction === 1 ? "Diabetic" : "Non-Diabetic";
+      document.getElementById(
+        "prediction-text"
+      ).textContent = `Result: ${predictionText}`;
+
+      // Update confidence
+      const confidence = (predictionData.probability * 100).toFixed(2);
+      document.getElementById(
+        "confidence-text"
+      ).textContent = `${confidence}%`;
+      document.getElementById(
+        "confidence-bar"
+      ).style.width = `${confidence}%`;
+
+      // Update top factors
+      const factorsList = document.getElementById("top-factors");
+      factorsList.innerHTML = "";
+      predictionData.top_features.forEach((factor) => {
+        const li = document.createElement("li");
+        li.textContent = `${factor.feature}: ${(
+          factor.importance * 100
+        ).toFixed(2)}%`;
+        factorsList.appendChild(li);
+      });
+
+      // Update medical advice with Gemini response
+      const adviceContainer = document.getElementById("medical-advice");
+
+      // Format the medical advice
+      let formattedAdvice = predictionData.gemini_advice;
+      
+      // Look for bullet points in various formats
+      formattedAdvice = formattedAdvice.replace(/•\s(.*?)(?=\n•|\n\n|$)/gs, '<li>$1</li>');
+      formattedAdvice = formattedAdvice.replace(/\n\s*\*\s(.*?)(?=\n\*|\n\n|$)/gs, '<li>$1</li>');
+      formattedAdvice = formattedAdvice.replace(/\n\s*-\s(.*?)(?=\n-|\n\n|$)/gs, '<li>$1</li>');
+      formattedAdvice = formattedAdvice.replace(/\n\s*\d+\.\s(.*?)(?=\n\d+\.|\n\n|$)/gs, '<li>$1</li>');
+      
+      // If we found and replaced any bullet points, wrap them in a ul
+      if (formattedAdvice.includes('<li>')) {
+        formattedAdvice = formattedAdvice.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
+      }
+      
+      // Convert line breaks to paragraphs for non-list content
+      formattedAdvice = formattedAdvice.replace(/\n\n/g, '</p><p>');
+      
+      // Wrap everything in paragraphs if not already
+      if (!formattedAdvice.startsWith('<')) {
+        formattedAdvice = '<p>' + formattedAdvice + '</p>';
+      }
+      
+      // Set the formatted HTML
+      adviceContainer.innerHTML = formattedAdvice;
+      
+    } catch (error) {
+      alert(`Error loading results: ${error.message}`);
+      window.location.href = "/";
+      return;
+    }
+    
+    // Chat functionality
+    const chatContainer = document.getElementById('chat-container');
+    const chatInput = document.getElementById('chat-input');
+    const sendButton = document.getElementById('send-button');
+    const typingIndicator = document.getElementById('typing-indicator');
+    
+    // Function to format current time
+    function getTimeString() {
+      const now = new Date();
+      return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+    
+    // Function to add message to chat with improved formatting
+    function addMessage(message, isUser = false) {
+      const messageElement = document.createElement('div');
+      messageElement.classList.add('chat-message');
+      messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
+      
+      // Create message content div
+      const contentElement = document.createElement('div');
+      
+      // Process message content to handle HTML formatting for bot messages
+      if (!isUser && (message.includes('<li>') || message.includes('<ul>') || message.includes('<p>'))) {
+        contentElement.innerHTML = message;
+      } else {
+        contentElement.textContent = message;
+      }
+      
+      // Create time element
+      const timeElement = document.createElement('div');
+      timeElement.classList.add('message-time');
+      timeElement.textContent = getTimeString();
+      
+      // Add content and time to message
+      messageElement.appendChild(contentElement);
+      messageElement.appendChild(timeElement);
+      
+      // Add message to chat
+      chatContainer.appendChild(messageElement);
+      
+      // Scroll to the new message with animation
+      setTimeout(() => {
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }, 100);
+    }
+    
+    // Function to send message to server and get response with improved UX
+    async function sendMessage(message) {
+      try {
+        // Show typing indicator
+        typingIndicator.style.display = 'block';
+        chatContainer.scrollTop = chatContainer.scrollHeight;
         
-        if (!predictionDataString) {
-          // If no data is found, redirect back to the form
-          alert("No prediction data found. Please fill out the form again.");
-          window.location.href = "/";
-          return;
-        }
+        // Add a small delay to simulate network request
+        // and make typing indicator visible for a moment
+        await new Promise(resolve => setTimeout(resolve, 800));
         
-        let predictionData;
+        // Send the message along with prediction data for context
+        const response = await fetch('/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            message: message,
+            prediction_data: predictionData
+          }),
+        });
         
-        try {
-          predictionData = JSON.parse(predictionDataString);
+        const data = await response.json();
+        
+        // Hide typing indicator
+        typingIndicator.style.display = 'none';
+        
+        if (response.ok) {
+          // Format the bot response
+          let formattedResponse = data.response;
           
-          // Update prediction result
-          const predictionText =
-            predictionData.prediction === 1 ? "Diabetic" : "Non-Diabetic";
-          document.getElementById(
-            "prediction-text"
-          ).textContent = `Result: ${predictionText}`;
-
-          // Update confidence
-          const confidence = (predictionData.probability * 100).toFixed(2);
-          document.getElementById(
-            "confidence-text"
-          ).textContent = `${confidence}%`;
-          document.getElementById(
-            "confidence-bar"
-          ).style.width = `${confidence}%`;
-
-          // Update top factors
-          const factorsList = document.getElementById("top-factors");
-          factorsList.innerHTML = "";
-          predictionData.top_features.forEach((factor) => {
-            const li = document.createElement("li");
-            li.textContent = `${factor.feature}: ${(
-              factor.importance * 100
-            ).toFixed(2)}%`;
-            factorsList.appendChild(li);
-          });
-
-          // Update medical advice with Gemini response
-          const adviceContainer = document.getElementById("medical-advice");
-  
-          // Format the medical advice
-          let formattedAdvice = predictionData.gemini_advice;
-          
-          // Look for bullet points in various formats
-          formattedAdvice = formattedAdvice.replace(/•\s(.*?)(?=\n•|\n\n|$)/gs, '<li>$1</li>');
-          formattedAdvice = formattedAdvice.replace(/\n\s*\*\s(.*?)(?=\n\*|\n\n|$)/gs, '<li>$1</li>');
-          formattedAdvice = formattedAdvice.replace(/\n\s*-\s(.*?)(?=\n-|\n\n|$)/gs, '<li>$1</li>');
-          formattedAdvice = formattedAdvice.replace(/\n\s*\d+\.\s(.*?)(?=\n\d+\.|\n\n|$)/gs, '<li>$1</li>');
+          // Look for bullet points and format them
+          formattedResponse = formattedResponse.replace(/•\s(.*?)(?=\n•|\n\n|$)/gs, '<li>$1</li>');
+          formattedResponse = formattedResponse.replace(/\n\s*\*\s(.*?)(?=\n\*|\n\n|$)/gs, '<li>$1</li>');
+          formattedResponse = formattedResponse.replace(/\n\s*-\s(.*?)(?=\n-|\n\n|$)/gs, '<li>$1</li>');
+          formattedResponse = formattedResponse.replace(/\n\s*\d+\.\s(.*?)(?=\n\d+\.|\n\n|$)/gs, '<li>$1</li>');
           
           // If we found and replaced any bullet points, wrap them in a ul
-          if (formattedAdvice.includes('<li>')) {
-            formattedAdvice = formattedAdvice.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
+          if (formattedResponse.includes('<li>')) {
+            formattedResponse = formattedResponse.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
           }
           
           // Convert line breaks to paragraphs for non-list content
-          formattedAdvice = formattedAdvice.replace(/\n\n/g, '</p><p>');
+          formattedResponse = formattedResponse.replace(/\n\n/g, '</p><p>');
           
           // Wrap everything in paragraphs if not already
-          if (!formattedAdvice.startsWith('<')) {
-            formattedAdvice = '<p>' + formattedAdvice + '</p>';
+          if (!formattedResponse.startsWith('<')) {
+            formattedResponse = '<p>' + formattedResponse + '</p>';
           }
           
-          // Set the formatted HTML
-          adviceContainer.innerHTML = formattedAdvice;
-          
-        } catch (error) {
-          alert(`Error loading results: ${error.message}`);
-          window.location.href = "/";
-          return;
+          // Add response to chat
+          addMessage(formattedResponse);
+        } else {
+          addMessage('Sorry, I encountered an error: ' + data.error);
         }
-        
-        // Chat functionality
-        const chatContainer = document.getElementById('chat-container');
-        const chatInput = document.getElementById('chat-input');
-        const sendButton = document.getElementById('send-button');
-        const typingIndicator = document.getElementById('typing-indicator');
-        
-        // Function to add message to chat
-        function addMessage(message, isUser = false) {
-          const messageElement = document.createElement('div');
-          messageElement.classList.add('chat-message');
-          messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
-          
-          // Process message content to handle HTML formatting for bot messages
-          if (!isUser && message.includes('<li>')) {
-            messageElement.innerHTML = message;
-          } else {
-            messageElement.textContent = message;
-          }
-          
-          chatContainer.appendChild(messageElement);
-          chatContainer.scrollTop = chatContainer.scrollHeight;
+      } catch (error) {
+        typingIndicator.style.display = 'none';
+        addMessage('Sorry, there was an error processing your request.');
+        console.error('Error:', error);
+      }
+    }
+    
+    // Event listener for send button
+    sendButton.addEventListener('click', function() {
+      const message = chatInput.value.trim();
+      if (message) {
+        addMessage(message, true);
+        chatInput.value = '';
+        sendMessage(message);
+      }
+    });
+    
+    // Event listener for enter key
+    chatInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') {
+        const message = chatInput.value.trim();
+        if (message) {
+          addMessage(message, true);
+          chatInput.value = '';
+          sendMessage(message);
         }
-        
-        // Function to send message to server and get response
-        async function sendMessage(message) {
-          try {
-            // Show typing indicator
-            typingIndicator.style.display = 'block';
-            
-            // Send the message along with prediction data for context
-            const response = await fetch('/chat', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                message: message,
-                prediction_data: predictionData
-              }),
-            });
-            
-            const data = await response.json();
-            
-            // Hide typing indicator
-            typingIndicator.style.display = 'none';
-            
-            if (response.ok) {
-              // Format the bot response
-              let formattedResponse = data.response;
-              
-              // Look for bullet points and format them
-              formattedResponse = formattedResponse.replace(/•\s(.*?)(?=\n•|\n\n|$)/gs, '<li>$1</li>');
-              formattedResponse = formattedResponse.replace(/\n\s*\*\s(.*?)(?=\n\*|\n\n|$)/gs, '<li>$1</li>');
-              formattedResponse = formattedResponse.replace(/\n\s*-\s(.*?)(?=\n-|\n\n|$)/gs, '<li>$1</li>');
-              formattedResponse = formattedResponse.replace(/\n\s*\d+\.\s(.*?)(?=\n\d+\.|\n\n|$)/gs, '<li>$1</li>');
-              
-              // If we found and replaced any bullet points, wrap them in a ul
-              if (formattedResponse.includes('<li>')) {
-                formattedResponse = formattedResponse.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
-              }
-              
-              // Convert line breaks to paragraphs for non-list content
-              formattedResponse = formattedResponse.replace(/\n\n/g, '</p><p>');
-              
-              // Add response to chat
-              addMessage(formattedResponse);
-            } else {
-              addMessage('Sorry, I encountered an error: ' + data.error);
-            }
-          } catch (error) {
-            typingIndicator.style.display = 'none';
-            addMessage('Sorry, there was an error processing your request.');
-            console.error('Error:', error);
-          }
-        }
-        
-        // Event listener for send button
-        sendButton.addEventListener('click', function() {
-          const message = chatInput.value.trim();
-          if (message) {
-            addMessage(message, true);
-            chatInput.value = '';
-            sendMessage(message);
-          }
-        });
-        
-        // Event listener for enter key
-        chatInput.addEventListener('keypress', function(e) {
-          if (e.key === 'Enter') {
-            const message = chatInput.value.trim();
-            if (message) {
-              addMessage(message, true);
-              chatInput.value = '';
-              sendMessage(message);
-            }
-          }
-        });
-      });
-    </script>
+      }
+    });
+    
+    // Focus input field when page loads
+    setTimeout(() => {
+      chatInput.focus();
+    }, 1000);
+  });
+</script>
   </body>
 </html>
