@@ -113,10 +113,10 @@ def predict():
         age = float(request.form['age'])
         
         # Create input array
-        input_data = np.array([[
-            pregnancies, glucose, blood_pressure, skin_thickness,
-            insulin, bmi, diabetes_pedigree, age
-        ]])
+        input_data = np.array([
+            [pregnancies, glucose, blood_pressure, skin_thickness,
+            insulin, bmi, diabetes_pedigree, age]
+        ])
         
         # Scale the data
         input_scaled = scaler.transform(input_data)
@@ -163,6 +163,54 @@ def predict():
 @app.route('/result')
 def result():
     return render_template('result.html')
+
+@app.route('/chat', methods=['POST'])
+def chat():
+    try:
+        # Get user message and prediction data from request
+        data = request.json
+        user_message = data.get('message', '')
+        prediction_data = data.get('prediction_data', {})
+        
+        # Extract relevant information from prediction data
+        prediction = prediction_data.get('prediction', 0)
+        probability = prediction_data.get('probability', 0)
+        top_features = prediction_data.get('top_features', [])
+        
+        # Create prompt for Gemini
+        result_text = "Diabetic" if prediction == 1 else "Non-Diabetic"
+        confidence = f"{probability * 100:.2f}%"
+        
+        # Format top features as text
+        features_text = ", ".join([f"{f['feature']}: {f['importance']:.4f}" for f in top_features])
+        
+        # Create context for the chatbot
+        prompt = f"""
+        You are a helpful healthcare assistant discussing diabetes prediction results.
+        
+        Context:
+        - The patient was predicted to be {result_text} with {confidence} confidence
+        - The top contributing factors were {features_text}
+        - The initial advice provided was: {prediction_data.get('gemini_advice', 'Not available')}
+        
+        The patient is asking: "{user_message}"
+        
+        Provide a helpful, accurate, and compassionate response. If appropriate, use bullet points for lists.
+        If the question is unrelated to diabetes or health, politely redirect to health-related topics.
+        Always emphasize that this is not medical advice and they should consult healthcare professionals.
+        Keep your response concise and focused.
+        """
+        
+        # Initialize Gemini model
+        gemini_model = genai.GenerativeModel('gemini-1.5-flash')
+        
+        # Call Gemini API
+        response = gemini_model.generate_content(prompt)
+        
+        return jsonify({'response': response.text})
+    
+    except Exception as e:
+        return jsonify({'error': str(e)}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
