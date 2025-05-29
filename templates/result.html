@@ -176,88 +176,7 @@
         margin-bottom: 0.75rem;
       }
 
-      /* Chat bot styling */
-      .chat-section {
-        background: white;
-        border-radius: 12px;
-        padding: 2rem;
-        margin-bottom: 2rem;
-        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
-      }
-
-      .chat-section h2 {
-        font-size: 1.8rem;
-        font-weight: 500;
-        color: #2b6cb0;
-        margin-bottom: 1.5rem;
-      }
-
-      .chat-container {
-        height: 300px;
-        overflow-y: auto;
-        padding: 1rem;
-        background: #f7fafc;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-      }
-
-      .chat-message {
-        padding: 0.75rem 1rem;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        max-width: 80%;
-        position: relative;
-      }
-
-      .user-message {
-        background: #3182ce;
-        color: white;
-        margin-left: auto;
-      }
-
-      .bot-message {
-        background: #e2e8f0;
-        color: #2d3748;
-      }
-
-      .chat-input {
-        display: flex;
-        gap: 0.5rem;
-      }
-
-      .chat-input input {
-        flex: 1;
-        padding: 0.75rem;
-        border: 1px solid #e2e8f0;
-        border-radius: 6px;
-        font-size: 1rem;
-      }
-
-      .chat-input button {
-        padding: 0.75rem 1.5rem;
-        background: #3182ce;
-        color: white;
-        border: none;
-        border-radius: 6px;
-        font-size: 1rem;
-        font-weight: 500;
-        cursor: pointer;
-      }
-
-      .chat-input button:hover {
-        background: #2c5282;
-      }
-
-      .typing-indicator {
-        display: none;
-        padding: 0.5rem 1rem;
-        background: #e2e8f0;
-        color: #2d3748;
-        border-radius: 8px;
-        margin-bottom: 1rem;
-        max-width: 80%;
-        font-style: italic;
-      }
+      
 
       @media (max-width: 768px) {
         header h1 {
@@ -271,6 +190,171 @@
         .result-section {
           padding: 1.5rem;
         }
+      }
+      /* Updated and new chat styling */
+      .chat-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .chat-section h2 {
+        font-size: 1.8rem;
+        font-weight: 500;
+        color: #2b6cb0;
+        margin-bottom: 0.5rem;
+      }
+      
+      .chat-section p {
+        color: #718096;
+        margin-bottom: 1.5rem;
+      }
+
+      .chat-container {
+        height: 350px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f7fafc;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        scroll-behavior: smooth;
+        box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .chat-message {
+        padding: 0.85rem 1.2rem;
+        border-radius: 18px;
+        margin-bottom: 1rem;
+        max-width: 85%;
+        position: relative;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        opacity: 0;
+        transform: translateY(10px);
+        animation: messageAppear 0.3s ease forwards;
+      }
+
+      @keyframes messageAppear {
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .user-message {
+        background: linear-gradient(135deg, #3182ce, #2c5282);
+        color: white;
+        margin-left: auto;
+        border-bottom-right-radius: 4px;
+      }
+
+      .bot-message {
+        background: white;
+        color: #2d3748;
+        border-bottom-left-radius: 4px;
+        border-left: 4px solid #3182ce;
+      }
+
+      .message-time {
+        font-size: 0.7rem;
+        opacity: 0.7;
+        margin-top: 0.3rem;
+        text-align: right;
+      }
+
+      .chat-input-container {
+        position: relative;
+        margin-top: 1rem;
+      }
+
+      .chat-input {
+        display: flex;
+        gap: 0.8rem;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 12px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+      }
+
+      .chat-input input {
+        flex: 1;
+        padding: 0.85rem 1rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+      }
+
+      .chat-input input:focus {
+        outline: none;
+        border-color: #3182ce;
+        box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.2);
+      }
+
+      .chat-input button {
+        padding: 0.85rem 1.5rem;
+        background: linear-gradient(135deg, #3182ce, #2c5282);
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(44, 82, 130, 0.3);
+      }
+
+      .chat-input button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 6px rgba(44, 82, 130, 0.4);
+      }
+      
+      .chat-input button:active {
+        transform: translateY(0);
+      }
+
+      .typing-indicator {
+        display: none;
+        padding: 0.75rem 1.2rem;
+        background: white;
+        color: #718096;
+        border-radius: 18px;
+        border-bottom-left-radius: 4px;
+        margin-bottom: 1rem;
+        max-width: 80%;
+        font-style: italic;
+        position: relative;
+        border-left: 4px solid #3182ce;
+        animation: messageAppear 0.3s ease forwards;
+      }
+      
+      .typing-dots {
+        display: inline-block;
+      }
+      
+      .typing-dots span {
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        background-color: #718096;
+        border-radius: 50%;
+        margin-right: 3px;
+        animation: typingDot 1.4s infinite;
+      }
+      
+      .typing-dots span:nth-child(2) {
+        animation-delay: 0.2s;
+      }
+      
+      .typing-dots span:nth-child(3) {
+        animation-delay: 0.4s;
+        margin-right: 0;
+      }
+      
+      @keyframes typingDot {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-5px); }
       }
     </style>
   </head>
@@ -298,27 +382,30 @@
       </div>
 
       <!-- Chat Bot Section -->
-      <div class="chat-section">
-        <h2>Ask Follow-up Questions</h2>
-        <p>Chat with our AI assistant about your diabetes prediction results or general health questions.</p>
-        
-        <div class="chat-container" id="chat-container">
+    <div class="chat-container" id="chat-container">
           <div class="chat-message bot-message">
-            Hello! I'm your health assistant. I have your prediction results and can answer questions about diabetes management, lifestyle recommendations, or explain your results in more detail. How can I help you today?
+            <div>Hello! I'm your health assistant. I have your prediction results and can answer questions about diabetes management, lifestyle recommendations, or explain your results in more detail. How can I help you today?</div>
+            <div class="message-time">Just now</div>
           </div>
-          <div class="typing-indicator" id="typing-indicator">Assistant is typing...</div>
+          <div class="typing-indicator" id="typing-indicator">
+            Assistant is typing<span class="typing-dots"><span></span><span></span><span></span></span>
+          </div>
         </div>
         
-        <div class="chat-input">
-          <input 
-            type="text" 
-            id="chat-input" 
-            placeholder="Type your question here..." 
-            aria-label="Your message"
-          />
-          <button id="send-button">Send</button>
+        <div class="chat-input-container">
+          <div class="chat-input">
+            <input 
+              type="text" 
+              id="chat-input" 
+              placeholder="Type your question here..." 
+              aria-label="Your message"
+            />
+            <button id="send-button">Send</button>
+          </div>
         </div>
       </div>
+    </div>
+
     </div>
 
     <footer>
