@@ -152,28 +152,112 @@
       footer p {
         margin-bottom: 0.5rem;
       }
+      
       .advice-container {
-  background: #f7fafc;
-  padding: 1.5rem;
-  border-radius: 8px;
-  font-size: 1rem;
-  color: #2d3748;
-  line-height: 1.8;
-  margin-bottom: 1.5rem;
-}
+        background: #f7fafc;
+        padding: 1.5rem;
+        border-radius: 8px;
+        font-size: 1rem;
+        color: #2d3748;
+        line-height: 1.8;
+        margin-bottom: 1.5rem;
+      }
 
-.advice-container ul {
-  padding-left: 1.5rem;
-  margin: 0.5rem 0;
-}
+      .advice-container ul {
+        padding-left: 1.5rem;
+        margin: 0.5rem 0;
+      }
 
-.advice-container li {
-  margin-bottom: 0.5rem;
-}
+      .advice-container li {
+        margin-bottom: 0.5rem;
+      }
 
-.advice-container p {
-  margin-bottom: 0.75rem;
-}
+      .advice-container p {
+        margin-bottom: 0.75rem;
+      }
+
+      /* Chat bot styling */
+      .chat-section {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .chat-section h2 {
+        font-size: 1.8rem;
+        font-weight: 500;
+        color: #2b6cb0;
+        margin-bottom: 1.5rem;
+      }
+
+      .chat-container {
+        height: 300px;
+        overflow-y: auto;
+        padding: 1rem;
+        background: #f7fafc;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+      }
+
+      .chat-message {
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        max-width: 80%;
+        position: relative;
+      }
+
+      .user-message {
+        background: #3182ce;
+        color: white;
+        margin-left: auto;
+      }
+
+      .bot-message {
+        background: #e2e8f0;
+        color: #2d3748;
+      }
+
+      .chat-input {
+        display: flex;
+        gap: 0.5rem;
+      }
+
+      .chat-input input {
+        flex: 1;
+        padding: 0.75rem;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 1rem;
+      }
+
+      .chat-input button {
+        padding: 0.75rem 1.5rem;
+        background: #3182ce;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+      }
+
+      .chat-input button:hover {
+        background: #2c5282;
+      }
+
+      .typing-indicator {
+        display: none;
+        padding: 0.5rem 1rem;
+        background: #e2e8f0;
+        color: #2d3748;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        max-width: 80%;
+        font-style: italic;
+      }
 
       @media (max-width: 768px) {
         header h1 {
@@ -209,8 +293,32 @@
         <h3>Top Contributing Factors</h3>
         <ul id="top-factors"></ul>
         <h3>Medical Advice</h3>
-<div id="medical-advice" class="advice-container"></div>
-<a href="/" class="button">Make New Prediction</a>      </div>
+        <div id="medical-advice" class="advice-container"></div>
+        <a href="/" class="button">Make New Prediction</a>
+      </div>
+
+      <!-- Chat Bot Section -->
+      <div class="chat-section">
+        <h2>Ask Follow-up Questions</h2>
+        <p>Chat with our AI assistant about your diabetes prediction results or general health questions.</p>
+        
+        <div class="chat-container" id="chat-container">
+          <div class="chat-message bot-message">
+            Hello! I'm your health assistant. I have your prediction results and can answer questions about diabetes management, lifestyle recommendations, or explain your results in more detail. How can I help you today?
+          </div>
+          <div class="typing-indicator" id="typing-indicator">Assistant is typing...</div>
+        </div>
+        
+        <div class="chat-input">
+          <input 
+            type="text" 
+            id="chat-input" 
+            placeholder="Type your question here..." 
+            aria-label="Your message"
+          />
+          <button id="send-button">Send</button>
+        </div>
+      </div>
     </div>
 
     <footer>
@@ -231,22 +339,24 @@
         if (!predictionDataString) {
           // If no data is found, redirect back to the form
           alert("No prediction data found. Please fill out the form again.");
-          window.location.href = "index.html";
+          window.location.href = "/";
           return;
         }
         
+        let predictionData;
+        
         try {
-          const result = JSON.parse(predictionDataString);
+          predictionData = JSON.parse(predictionDataString);
           
           // Update prediction result
           const predictionText =
-            result.prediction === 1 ? "Diabetic" : "Non-Diabetic";
+            predictionData.prediction === 1 ? "Diabetic" : "Non-Diabetic";
           document.getElementById(
             "prediction-text"
           ).textContent = `Result: ${predictionText}`;
 
           // Update confidence
-          const confidence = (result.probability * 100).toFixed(2);
+          const confidence = (predictionData.probability * 100).toFixed(2);
           document.getElementById(
             "confidence-text"
           ).textContent = `${confidence}%`;
@@ -257,7 +367,7 @@
           // Update top factors
           const factorsList = document.getElementById("top-factors");
           factorsList.innerHTML = "";
-          result.top_features.forEach((factor) => {
+          predictionData.top_features.forEach((factor) => {
             const li = document.createElement("li");
             li.textContent = `${factor.feature}: ${(
               factor.importance * 100
@@ -266,42 +376,136 @@
           });
 
           // Update medical advice with Gemini response
-           const adviceContainer = document.getElementById("medical-advice");
+          const adviceContainer = document.getElementById("medical-advice");
   
-  // Format the medical advice
-  let formattedAdvice = result.gemini_advice;
-  
-  // Look for bullet points in various formats
-  formattedAdvice = formattedAdvice.replace(/•\s(.*?)(?=\n•|\n\n|$)/gs, '<li>$1</li>');
-  formattedAdvice = formattedAdvice.replace(/\n\s*\*\s(.*?)(?=\n\*|\n\n|$)/gs, '<li>$1</li>');
-  formattedAdvice = formattedAdvice.replace(/\n\s*-\s(.*?)(?=\n-|\n\n|$)/gs, '<li>$1</li>');
-  formattedAdvice = formattedAdvice.replace(/\n\s*\d+\.\s(.*?)(?=\n\d+\.|\n\n|$)/gs, '<li>$1</li>');
-  
-  // If we found and replaced any bullet points, wrap them in a ul
-  if (formattedAdvice.includes('<li>')) {
-    formattedAdvice = formattedAdvice.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
-  }
-  
-  // Convert line breaks to paragraphs for non-list content
-  formattedAdvice = formattedAdvice.replace(/\n\n/g, '</p><p>');
-  
-  // Wrap everything in paragraphs if not already
-  if (!formattedAdvice.startsWith('<')) {
-    formattedAdvice = '<p>' + formattedAdvice + '</p>';
-  }
-  
-  // Set the formatted HTML
-  adviceContainer.innerHTML = formattedAdvice;
-  
-            
-          // Clear sessionStorage after displaying results
-          // This is optional - you might want to keep it for back navigation
-          // sessionStorage.removeItem("predictionData");
+          // Format the medical advice
+          let formattedAdvice = predictionData.gemini_advice;
+          
+          // Look for bullet points in various formats
+          formattedAdvice = formattedAdvice.replace(/•\s(.*?)(?=\n•|\n\n|$)/gs, '<li>$1</li>');
+          formattedAdvice = formattedAdvice.replace(/\n\s*\*\s(.*?)(?=\n\*|\n\n|$)/gs, '<li>$1</li>');
+          formattedAdvice = formattedAdvice.replace(/\n\s*-\s(.*?)(?=\n-|\n\n|$)/gs, '<li>$1</li>');
+          formattedAdvice = formattedAdvice.replace(/\n\s*\d+\.\s(.*?)(?=\n\d+\.|\n\n|$)/gs, '<li>$1</li>');
+          
+          // If we found and replaced any bullet points, wrap them in a ul
+          if (formattedAdvice.includes('<li>')) {
+            formattedAdvice = formattedAdvice.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
+          }
+          
+          // Convert line breaks to paragraphs for non-list content
+          formattedAdvice = formattedAdvice.replace(/\n\n/g, '</p><p>');
+          
+          // Wrap everything in paragraphs if not already
+          if (!formattedAdvice.startsWith('<')) {
+            formattedAdvice = '<p>' + formattedAdvice + '</p>';
+          }
+          
+          // Set the formatted HTML
+          adviceContainer.innerHTML = formattedAdvice;
           
         } catch (error) {
           alert(`Error loading results: ${error.message}`);
-          window.location.href = "index.html";
+          window.location.href = "/";
+          return;
         }
+        
+        // Chat functionality
+        const chatContainer = document.getElementById('chat-container');
+        const chatInput = document.getElementById('chat-input');
+        const sendButton = document.getElementById('send-button');
+        const typingIndicator = document.getElementById('typing-indicator');
+        
+        // Function to add message to chat
+        function addMessage(message, isUser = false) {
+          const messageElement = document.createElement('div');
+          messageElement.classList.add('chat-message');
+          messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
+          
+          // Process message content to handle HTML formatting for bot messages
+          if (!isUser && message.includes('<li>')) {
+            messageElement.innerHTML = message;
+          } else {
+            messageElement.textContent = message;
+          }
+          
+          chatContainer.appendChild(messageElement);
+          chatContainer.scrollTop = chatContainer.scrollHeight;
+        }
+        
+        // Function to send message to server and get response
+        async function sendMessage(message) {
+          try {
+            // Show typing indicator
+            typingIndicator.style.display = 'block';
+            
+            // Send the message along with prediction data for context
+            const response = await fetch('/chat', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                message: message,
+                prediction_data: predictionData
+              }),
+            });
+            
+            const data = await response.json();
+            
+            // Hide typing indicator
+            typingIndicator.style.display = 'none';
+            
+            if (response.ok) {
+              // Format the bot response
+              let formattedResponse = data.response;
+              
+              // Look for bullet points and format them
+              formattedResponse = formattedResponse.replace(/•\s(.*?)(?=\n•|\n\n|$)/gs, '<li>$1</li>');
+              formattedResponse = formattedResponse.replace(/\n\s*\*\s(.*?)(?=\n\*|\n\n|$)/gs, '<li>$1</li>');
+              formattedResponse = formattedResponse.replace(/\n\s*-\s(.*?)(?=\n-|\n\n|$)/gs, '<li>$1</li>');
+              formattedResponse = formattedResponse.replace(/\n\s*\d+\.\s(.*?)(?=\n\d+\.|\n\n|$)/gs, '<li>$1</li>');
+              
+              // If we found and replaced any bullet points, wrap them in a ul
+              if (formattedResponse.includes('<li>')) {
+                formattedResponse = formattedResponse.replace(/(<li>.*?<\/li>)/gs, '<ul>$1</ul>');
+              }
+              
+              // Convert line breaks to paragraphs for non-list content
+              formattedResponse = formattedResponse.replace(/\n\n/g, '</p><p>');
+              
+              // Add response to chat
+              addMessage(formattedResponse);
+            } else {
+              addMessage('Sorry, I encountered an error: ' + data.error);
+            }
+          } catch (error) {
+            typingIndicator.style.display = 'none';
+            addMessage('Sorry, there was an error processing your request.');
+            console.error('Error:', error);
+          }
+        }
+        
+        // Event listener for send button
+        sendButton.addEventListener('click', function() {
+          const message = chatInput.value.trim();
+          if (message) {
+            addMessage(message, true);
+            chatInput.value = '';
+            sendMessage(message);
+          }
+        });
+        
+        // Event listener for enter key
+        chatInput.addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            const message = chatInput.value.trim();
+            if (message) {
+              addMessage(message, true);
+              chatInput.value = '';
+              sendMessage(message);
+            }
+          }
+        });
       });
     </script>
   </body>
